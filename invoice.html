@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Invoice {{ number }}</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+<style>
+  body { font-family: Inter, Arial, sans-serif; font-size: 9.5pt; color: #1d2330; margin: 0; }
+  .muted { color: #5d6475; }
+
+  /* Header: logo and seller on the left, invoice details on the right. */
+  .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 24pt; }
+  .brand { display: flex; align-items: center; gap: 10pt; }
+  .brand svg { width: 40pt; height: 40pt; }
+  .brand b { display: block; font-size: 13pt; }
+  .meta { text-align: right; }
+  .meta h1 { font-size: 22pt; margin: 0 0 6pt; letter-spacing: .02em; }
+  .meta dl { display: grid; grid-template-columns: auto auto; gap: 2pt 12pt; margin: 0; }
+  .meta dt { color: #5d6475; }
+  .meta dd { margin: 0; font-weight: 600; }
+
+  .parties { display: flex; gap: 24pt; margin: 22pt 0 16pt; }
+  .parties div { flex: 1; border-top: 2pt solid #2f6b4f; padding-top: 6pt; }
+  .parties h2 { font-size: 7.5pt; text-transform: uppercase; letter-spacing: .08em; color: #5d6475; margin: 0 0 4pt; }
+
+  /* Line items: the header row repeats on every page, rows never split. */
+  table { width: 100%; border-collapse: collapse; }
+  thead { display: table-header-group; }
+  th { text-align: left; font-size: 7.5pt; text-transform: uppercase; letter-spacing: .06em; color: #fff; background: #2f6b4f; padding: 5pt 6pt; }
+  td { padding: 4pt 6pt; border-bottom: 1px solid #e3e6ec; vertical-align: top; }
+  tr { break-inside: avoid; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .sku { color: #5d6475; font-size: 8pt; white-space: nowrap; }
+  .badge { font-size: 7pt; font-weight: 600; color: #8a4b00; background: #fff1dc; border-radius: 3pt; padding: 1pt 4pt; margin-left: 4pt; }
+
+  /* Totals and notes stay together at the end. */
+  .end { display: flex; justify-content: space-between; gap: 24pt; margin-top: 14pt; break-inside: avoid; }
+  .notes { flex: 1; font-size: 8.5pt; }
+  .totals { width: 200pt; }
+  .totals td { border: none; padding: 3pt 6pt; }
+  .totals .due td { font-size: 12pt; font-weight: 700; border-top: 2pt solid #2f6b4f; padding-top: 6pt; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <rect width="48" height="48" rx="10" fill="#2f6b4f"/>
+        <path d="M8 36 L19 18 L26 28 L31 21 L40 36 Z" fill="#fff"/>
+        <circle cx="34" cy="13" r="4" fill="#f2c14e"/>
+      </svg>
+      <div>
+        <b>{{ seller.name }}</b>
+        <span class="muted">{{ seller.address | join(", ") }}</span>
+      </div>
+    </div>
+    <div class="meta">
+      <h1>INVOICE</h1>
+      <dl>
+        <dt>Invoice number</dt><dd>{{ number }}</dd>
+        <dt>Issued</dt><dd>{{ issued }}</dd>
+        <dt>Due</dt><dd>{{ due }}</dd>
+        {% if po_number %}<dt>PO number</dt><dd>{{ po_number }}</dd>{% endif %}
+      </dl>
+    </div>
+  </div>
+
+  <div class="parties">
+    <div>
+      <h2>Bill to</h2>
+      <b>{{ customer.name }}</b><br>
+      Attn: {{ customer.contact }}<br>
+      {% for line in customer.address %}{{ line }}<br>{% endfor %}
+    </div>
+    <div>
+      <h2>From</h2>
+      <b>{{ seller.name }}</b><br>
+      {% for line in seller.address %}{{ line }}<br>{% endfor %}
+      {{ seller.email }}
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>#</th><th>SKU</th><th>Item</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td class="muted">{{ loop.index }}</td>
+        <td class="sku">{{ item.sku }}</td>
+        <td>{{ item.description }}{% if item.backorder %}<span class="badge">Backorder</span>{% endif %}</td>
+        <td class="num">{{ item.qty }}</td>
+        <td class="num">${{ "{:,.2f}".format(item.unit_price) }}</td>
+        <td class="num">${{ "{:,.2f}".format(item.amount) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="end">
+    <p class="notes muted">{{ notes }}</p>
+    <table class="totals">
+      <tr><td>Subtotal</td><td class="num">${{ "{:,.2f}".format(totals.subtotal) }}</td></tr>
+      <tr><td>Sales tax ({{ totals.tax_percent }}%)</td><td class="num">${{ "{:,.2f}".format(totals.tax) }}</td></tr>
+      <tr><td>Shipping</td><td class="num">${{ "{:,.2f}".format(totals.shipping) }}</td></tr>
+      <tr class="due"><td>Amount due</td><td class="num">${{ "{:,.2f}".format(totals.total) }}</td></tr>
+    </table>
+  </div>
+</body>
+</html>
