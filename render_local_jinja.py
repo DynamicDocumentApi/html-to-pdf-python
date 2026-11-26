@@ -20,7 +20,11 @@ dda = DynamicDocumentApi()
 render = dda.pdf.from_html(
     html=html,
     templating=False,  # the HTML is final: {{ }} in it is printed as text, not filled in again
-    pdf={"paper": {"size": "Letter"}, "footer": {"enabled": True, "right": "Page {{page}} of {{pages}}"}},
+    pdf={
+        "paper": {"size": "Letter"},
+        "margin": {"top": "16mm", "right": "16mm", "bottom": "20mm", "left": "16mm"},
+        "footer": {"enabled": True, "right": "Page {{page}} of {{pages}}", "height": "12mm"},
+    },
 )
 if render["status"] != "succeeded":
     render = dda.wait_for_render(render["id"])
